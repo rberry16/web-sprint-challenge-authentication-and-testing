@@ -37,7 +37,7 @@ router.post('/register', md.checkPayload, md.checkUsernameFree, async (req, res)
     username: req.body.username,
     password: hash
   });
-  res.status(201).json(newUser);
+  res.status(201).json(newUser[0]);
 });
 
 router.post('/login', md.checkPayload, md.checkUsernameExists, async (req, res) => {
