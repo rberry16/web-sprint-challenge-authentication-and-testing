@@ -1,7 +1,12 @@
 const router = require('express').Router();
+const Auth = require('./auth-model');
+const md = require('../middleware/auth-middleware');
+const bcrypt = require('bcryptjs');
+const JWT_SECRET = require('../secrets/secrets');
+const jwt = require('jsonwebtoken');
 
-router.post('/register', (req, res) => {
-  res.end('implement register, please!');
+router.post('/register', md.checkPayload, md.checkUsernameFree, async (req, res) => {
+  
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -27,10 +32,15 @@ router.post('/register', (req, res) => {
     4- On FAILED registration due to the `username` being taken,
       the response body should include a string exactly as follows: "username taken".
   */
+  const hash = bcrypt.hashSync(req.body.password, 8);
+  const newUser = await Auth.add({
+    username: req.body.username,
+    password: hash
+  });
+  res.status(201).json(newUser);
 });
 
-router.post('/login', (req, res) => {
-  res.end('implement login, please!');
+router.post('/login', md.checkPayload, md.checkUsernameExists, async (req, res) => {
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -54,6 +64,26 @@ router.post('/login', (req, res) => {
     4- On FAILED login due to `username` not existing in the db, or `password` being incorrect,
       the response body should include a string exactly as follows: "invalid credentials".
   */
+
+    const buildToken = (user) => {
+      const payload = {
+        username: user.username
+      }
+      const options = {
+        expiresIn: '1d'
+      }
+      return jwt.sign(payload, `${JWT_SECRET}`, options);
+    }
+
+    if (bcrypt.compareSync(req.body.password, req.user.password)) {
+      const token = buildToken(req.user);
+      res.json({
+        message: `welcome, ${req.user.username}`,
+        token
+      })
+    } else {
+      res.status(401).json({message: 'invalid credentials'});
+    }
 });
 
 module.exports = router;
