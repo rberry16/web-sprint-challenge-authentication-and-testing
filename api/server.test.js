@@ -53,3 +53,13 @@ test('[4] get request to jokes with token recieves jokes', async () => {
     },
   )
 })
+
+test('[5] auth login with bad credentials returns correct message', async () => {
+  const res = await request(server).post('/api/auth/login').send({username: 'fizz', password: 'fazz'});
+  expect(res.body.message).toMatch('invalid credentials');
+})
+
+test('[6] auth login with good credentials returns correct message', async () => {
+  const res = await request(server).post('/api/auth/login').send({username: 'fred', password: 'pswd'});
+  expect(res.body.message).toMatch('welcome, fred');
+})
